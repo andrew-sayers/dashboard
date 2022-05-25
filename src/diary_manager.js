@@ -111,22 +111,35 @@ export default {
         permanent_callbacks[key] = cb;
     },
     add_diaries(event) {
-        forced_timezone = 0;
         awaiting_files = event.target.files;
         current_file = awaiting_files[0];
         awaiting_index = 1;
         diary_loader.load([current_file]);
     },
     add_demo(filename) {
-        forced_timezone = 'Etc/GMT';
         fetch(filename)
             .then( r => r.text() )
             // trim the diary to an amount that doesn't intimidate new users:
-            .then( t => {
+            .then( t =>
                 diary_loader.load(
-                    t.split("\n").filter( line => line.search(/^2020-(?:1|0[3-9])|^2021/) ).join("\n")
+                    t
+                        .replace(/[-0-9T:.]+Z/g,time => {
+                            time = new Date(time);
+                            return new Date(
+                                time.getUTCFullYear(),
+                                time.getUTCMonth()+1,
+                                time.getUTCDate(),
+                                time.getUTCHours(),
+                                time.getUTCMinutes(),
+                                time.getUTCSeconds(),
+                                time.getMilliseconds(),
+                            ).toISOString();
+                        })
+                        .split("\n")
+                        .filter( line => line.search(/^2020-(?:1|0[3-9])|^2021/) )
+                        .join("\n")
                 )
-            })
+            )
         ;
     },
     remove_diary(id) {
